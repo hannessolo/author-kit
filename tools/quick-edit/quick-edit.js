@@ -6,7 +6,7 @@ import { loadPage } from '../../scripts/scripts.js';
 const QUICK_EDIT_ID = 'quick-edit-iframe';
 const QUICK_EDIT_SRC =
   hostname != "localhost"
-    ? "https://da.live/drafts/wysiwyg/init?nx=da-fusion"
+    ? "https://main--da-live--adobe.aem.live/drafts/wysiwyg/init?nx=da-fusion"
     : `https://main--da-live--adobe.aem.live/drafts/wysiwyg/init?nx=local&ref=local`;
 
 function pollConnection(action) {
