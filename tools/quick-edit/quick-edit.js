@@ -74,7 +74,7 @@ export default async function loadQuickEdit({ detail: payload }) {
   const iframe = document.createElement("iframe");
   iframe.id = QUICK_EDIT_ID;
   iframe.src = QUICK_EDIT_SRC;
-  iframe.allow = "local-network-access * clipboard-write *";
+  iframe.allow = "local-network-access *; clipboard-write *";
 
   pollConnection(() => {
     handleLoad({ target: iframe, config: payload.config, location: payload.location });
