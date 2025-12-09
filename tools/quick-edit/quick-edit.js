@@ -58,7 +58,6 @@ function setupContentEditableListeners(port) {
       const dataCursor = e.target.getAttribute('data-cursor');
       // Send the update back to the editor
       if (port && dataCursor) {
-        console.log('sending')
         port.postMessage({
           type: 'content-update',
           newText,
@@ -84,6 +83,40 @@ function updateInstrumentation(lengthDiff, offset) {
   });
 }
 
+function setRemoteCursors() {
+  // Add CSS rule for ::before pseudo-element if not already added
+  if (!document.getElementById('remote-cursor-styles')) {
+    const style = document.createElement('style');
+    style.id = 'remote-cursor-styles';
+    style.textContent = `
+      .remote-cursor-indicator::before {
+        content: attr(data-cursor-remote);
+        position: absolute;
+        background: red;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: bold;
+        transform: translateY(-100%);
+        margin-top: -4px;
+        white-space: nowrap;
+        z-index: 1000;
+      }
+      .remote-cursor-indicator {
+        position: relative;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  const remoteCursorElements = document.querySelectorAll('[data-cursor-remote]');
+  remoteCursorElements.forEach((element) => {
+    element.style.border = '2px solid red';
+    element.classList.add('remote-cursor-indicator');
+  });
+}
+
 function handleLoad({ target, config, location }) {
   const CHANNEL = new MessageChannel();
   const { port1, port2 } = CHANNEL;
@@ -98,6 +131,7 @@ function handleLoad({ target, config, location }) {
       const doc = new DOMParser().parseFromString(e.data.body, 'text/html');
       document.body.innerHTML = doc.body.innerHTML;
       await loadPage();
+      setRemoteCursors();
       setupContentEditableListeners(port1);
     }
 
