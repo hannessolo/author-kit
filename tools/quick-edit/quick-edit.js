@@ -22,19 +22,37 @@ function pollConnection(action) {
   }, 500);
 }
 
+function getCursorPosition(element) {
+  const selection = window.getSelection();
+  if (!selection.rangeCount) return 0;
+  
+  const range = selection.getRangeAt(0);
+  const preCaretRange = range.cloneRange();
+  preCaretRange.selectNodeContents(element);
+  preCaretRange.setEnd(range.endContainer, range.endOffset);
+  
+  return preCaretRange.toString().length;
+}
+
 function setupContentEditableListeners(port) {
   const editableElements = document.querySelectorAll('[contenteditable="true"]');
   editableElements.forEach((element) => {
+    element.addEventListener('click', (e) => {
+      const dataCursor = e.target.getAttribute('data-cursor');
+      // Send cursor position when user clicks into the element
+      if (port && dataCursor) {
+        const textCursorOffset = getCursorPosition(e.target);
+        port.postMessage({
+          type: 'cursor-move',
+          cursorOffset: parseInt(dataCursor, 10),
+          textCursorOffset,
+        });
+      }
+    });
+
     element.addEventListener('input', (e) => {
       const newText = e.target.textContent;
       const dataCursor = e.target.getAttribute('data-cursor');
-      // eslint-disable-next-line no-console
-      console.log('Content changed:', {
-        newText,
-        dataCursor,
-        element: e.target,
-      });
-      
       // Send the update back to the editor
       if (port && dataCursor) {
         console.log('sending')
