@@ -1,0 +1,27 @@
+{
+  "name": "@wknd/page-mapper",
+  "version": "1.0.0",
+  "description": "Page element mapper for mapping rendered page elements back to source elements",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "mocha --timeout 30000",
+    "test:watch": "mocha --watch --timeout 30000"
+  },
+  "keywords": [
+    "dom",
+    "mapper",
+    "element",
+    "page",
+    "rendering",
+    "aem"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "mocha": "^10.2.0",
+    "chai": "^4.3.10",
+    "jsdom": "^23.0.1"
+  }
+}
+
