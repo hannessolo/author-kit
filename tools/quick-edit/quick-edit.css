@@ -1,0 +1,55 @@
+.remote-cursor-indicator::before {
+  content: attr(data-cursor-remote);
+  position: absolute;
+  background: var(--cursor-remote-color, red);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+  transform: translateY(-100%);
+  margin-top: -4px;
+  white-space: nowrap;
+  z-index: 1000;
+}
+
+.remote-cursor-indicator {
+  position: relative;
+  border: 2px solid;
+}
+
+[contenteditable="true"]:hover {
+  outline: 1px solid var(--color-blue-600, blue);
+}
+
+.quick-edit-close {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--color-blue-400, #5898ff);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-edit-close:hover {
+  background: var(--color-blue-600, #3b82f6);
+}
+
+.quick-edit-close .icon-close {
+  display: block;
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  mask: url('/img/icons/close.svg') no-repeat center / contain;
+  -webkit-mask: url('/img/icons/close.svg') no-repeat center / contain;
+}

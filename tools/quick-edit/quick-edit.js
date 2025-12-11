@@ -1,9 +1,12 @@
 const hostname = window.location.hostname;
 let initialized = false;
 
+import { loadStyle } from '../../scripts/ak.js';
 import { loadPage } from '../../scripts/scripts.js';
 import { saveCursorPosition, restoreCursorPosition } from './utils.js';
 import { initializePageMapper, applyLiveElementAttributes } from './page-mapper-integration.js';
+
+loadStyle('/tools/quick-edit/quick-edit.css');
 
 const QUICK_EDIT_ID = 'quick-edit-iframe';
 const QUICK_EDIT_SRC =
@@ -104,33 +107,6 @@ function updateInstrumentation(lengthDiff, offset) {
 }
 
 function setRemoteCursors() {
-  // Add CSS rule for ::before pseudo-element if not already added
-  if (!document.getElementById('remote-cursor-styles')) {
-    const style = document.createElement('style');
-    style.id = 'remote-cursor-styles';
-    style.textContent = `
-      .remote-cursor-indicator::before {
-        content: attr(data-cursor-remote);
-        position: absolute;
-        background: red;
-        color: white;
-        padding: 2px 6px;
-        border-radius: 3px;
-        font-size: 12px;
-        font-weight: bold;
-        transform: translateY(-100%);
-        margin-top: -4px;
-        white-space: nowrap;
-        z-index: 1000;
-      }
-      .remote-cursor-indicator {
-        position: relative;
-        border: 2px solid red;
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
   document.querySelectorAll('.remote-cursor-indicator').forEach((element) => {
     element.classList.remove('remote-cursor-indicator');
   });
@@ -138,7 +114,25 @@ function setRemoteCursors() {
   const remoteCursorElements = document.querySelectorAll('[data-cursor-remote]');
   remoteCursorElements.forEach((element) => {
     element.classList.add('remote-cursor-indicator');
+    const color = element.getAttribute('data-cursor-remote-color');
+    element.style.borderColor = color;
+    element.style.setProperty('--cursor-remote-color', color);
   });
+}
+
+function setupCloseButton() {
+  const button = document.createElement('button');
+  button.className = 'quick-edit-close';
+  button.title = 'Close Quick Edit';
+  
+  const icon = document.createElement('i');
+  icon.className = 'icon-close';
+  button.appendChild(icon);
+  
+  button.addEventListener('click', () => {
+    window.location.reload();
+  });
+  document.body.appendChild(button);
 }
 
 function handleLoad({ target, config, location }) {
@@ -164,6 +158,7 @@ function handleLoad({ target, config, location }) {
 
       setRemoteCursors();
       setupContentEditableListeners(port1);
+      setupCloseButton();
     }
 
     if (e.data.set === 'text') {
@@ -200,6 +195,7 @@ function handleLoad({ target, config, location }) {
       const currentElements = document.querySelectorAll('[data-cursor-remote]');
       currentElements.forEach((element) => {
         element.removeAttribute('data-cursor-remote');
+        element.removeAttribute('data-cursor-remote-color');
       });
 
       // Get all elements with data-cursor from the parsed doc
@@ -208,6 +204,7 @@ function handleLoad({ target, config, location }) {
       // For each element in parsed doc, find matching element in current doc by data-cursor
       parsedElements.forEach((parsedElement) => {
         const remoteCursorValue = parsedElement.getAttribute('data-cursor-remote');
+        const remoteCursorColor = parsedElement.getAttribute('data-cursor-remote-color');
         const dataCursor = parsedElement.getAttribute('data-cursor');
 
         // Find element in current document with the same data-cursor value
@@ -215,6 +212,7 @@ function handleLoad({ target, config, location }) {
           const matchingElement = document.querySelector(`[data-cursor="${dataCursor}"]`);
           if (matchingElement) {
             matchingElement.setAttribute('data-cursor-remote', remoteCursorValue);
+            matchingElement.setAttribute('data-cursor-remote-color', remoteCursorColor);
           }
         }
       });
