@@ -3,7 +3,6 @@ let initialized = false;
 
 import { loadStyle } from '../../scripts/ak.js';
 import { loadPage } from '../../scripts/scripts.js';
-import { saveCursorPosition, restoreCursorPosition } from './utils.js';
 import { getSchema } from 'https://main--da-live--adobe.aem.live/blocks/edit/prose/schema.js';
 import { EditorState, EditorView } from 'https://main--da-live--adobe.aem.live/deps/da-y-wrapper/dist/index.js';
 
@@ -14,7 +13,7 @@ loadStyle('/tools/quick-edit/quick-edit.css');
 const QUICK_EDIT_ID = 'quick-edit-iframe';
 const QUICK_EDIT_SRC =
   hostname != "localhost"
-    ? "https://main--da-live--adobe.aem.live/drafts/wysiwyg/init?nx=da-fusion"
+    ? "https://main--da-live--adobe.aem.live/drafts/wysiwyg/init?nx=da-fusion-rte"
     : `https://main--da-live--adobe.aem.live/drafts/wysiwyg/init?nx=local&ref=local`;
 
 function pollConnection(action) {
@@ -30,31 +29,6 @@ function pollConnection(action) {
   }, 500);
 }
 
-function getCursorPosition(element) {
-  const selection = window.getSelection();
-  if (!selection.rangeCount) return 0;
-  
-  const range = selection.getRangeAt(0);
-  const preCaretRange = range.cloneRange();
-  preCaretRange.selectNodeContents(element);
-  preCaretRange.setEnd(range.endContainer, range.endOffset);
-  
-  return preCaretRange.toString().length;
-}
-
-// function handleInteraction(e, port) {
-//   const dataCursor = e.target.getAttribute('data-cursor');
-//   // Send cursor position when user clicks into the element
-//   if (port && dataCursor) {
-//     const textCursorOffset = getCursorPosition(e.target);
-//     port.postMessage({
-//       type: 'cursor-move',
-//       cursorOffset: parseInt(dataCursor, 10),
-//       textCursorOffset,
-//     });
-//   }
-// }
-
 function setupContentEditableListeners(port) {
   const editableElements = document.querySelectorAll('[data-cursor]');
   editableElements.forEach((element) => {
@@ -64,19 +38,6 @@ function setupContentEditableListeners(port) {
       type: 'get-editor',
       cursorOffset: dataCursor,
     });
-
-    // element.addEventListener('input', (e) => {
-    //   const newText = e.target.textContent;
-    //   const dataCursor = e.target.getAttribute('data-cursor');
-    //   // Send the update back to the editor
-    //   if (port && dataCursor) {
-    //     port.postMessage({
-    //       type: 'content-update',
-    //       newText,
-    //       cursorOffset: parseInt(dataCursor, 10),
-    //     });
-    //   }
-    // });
   });
 }
 
@@ -324,25 +285,23 @@ function createProsemirrorEditor(cursorOffset, state, port1) {
         updateInstrumentation(newState.doc.firstChild.nodeSize - oldLength, currentCursorOffset);
 
         if (remoteUpdate) { return; }
-
-        // Check if selection changed
-        const newSelection = newState.selection.from;
-        if (oldSelection !== newSelection) {
-          console.log('cursor-move', currentCursorOffset, newSelection);
-          port1.postMessage({
-            type: 'cursor-move',
-            cursorOffset: currentCursorOffset - 1,
-            textCursorOffset: newSelection,
-          });
-        }
         
         if (numChanges > 0) {
-          console.log('seinding node update');
           const editedEl = newState.doc.firstChild;
           port1.postMessage({
             type: 'node-update',
             node: editedEl.toJSON(),
             cursorOffset: currentCursorOffset,
+          });
+        }
+
+        // Check if selection changed
+        const newSelection = newState.selection.from;
+        if (oldSelection !== newSelection) {
+          port1.postMessage({
+            type: 'cursor-move',
+            cursorOffset: currentCursorOffset - 1,
+            textCursorOffset: newSelection,
           });
         }
       }
