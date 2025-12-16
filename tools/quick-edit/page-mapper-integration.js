@@ -1,6 +1,11 @@
 /**
  * Page-Mapper Integration for Quick-Edit
  * Handles mapping between source and rendered elements
+ * 
+ * Note: With the new iframe renderer, page-mapper now handles the full rendering
+ * pipeline internally by loading the production URL in an iframe and injecting
+ * the marked HTML. This ensures accurate element tracking through the complete
+ * decoration process.
  */
 
 import { createAuthorKitMapper } from './page-mapper-adapter.js';
@@ -37,6 +42,14 @@ function copySourceAttributes(sourceElement, renderedElement) {
 
 /**
  * Initializes page-mapper with source HTML
+ * 
+ * This will:
+ * 1. Embed markers in the source HTML
+ * 2. Load the production URL in an iframe
+ * 3. Replace the iframe's main content with marked HTML
+ * 4. Wait for page decoration to complete
+ * 5. Build mappings between source and decorated elements
+ * 
  * @param {string} sourceHTML - Raw HTML from DA-NX
  */
 export async function initializePageMapper(sourceHTML) {

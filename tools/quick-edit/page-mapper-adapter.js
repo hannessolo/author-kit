@@ -1,94 +1,89 @@
 /**
  * Page-Mapper Adapter for Author Kit
  * 
- * Configures page-mapper to simulate Author Kit's rendering pipeline.
- * This adapter ensures the mapper accurately tracks how elements transform
- * during block initialization and decoration.
+ * Configures page-mapper to use the iframe renderer with Author Kit's production URL.
+ * This ensures the mapper accurately tracks how elements transform during the full
+ * rendering pipeline including block initialization and decoration.
  */
 
 import { initializeMapper, DEFAULT_CONFIG } from '../../deps/page-mapper/src/index.js';
-import { loadArea, setConfig } from '../../scripts/ak.js';
 
 /**
- * Decorates the area for page-mapper simulation
- * Replicates the same rendering pipeline as the live page
+ * Gets the current page URL for iframe rendering
+ * This should be the production/live URL of the current page
  * 
- * @param {HTMLElement} root - The root element to decorate (usually <main>)
- * @param {Document} doc - The iframe document context
+ * @returns {string} Current page URL
  */
-async function decorateForMapper(root, doc) {
-  try {
-    // Verify we have valid inputs
-    if (!root) {
-      console.warn('[Page-Mapper Adapter] No root element provided');
-      return;
-    }
+function getCurrentPageURL() {
+  // Return the current page URL
+  // The iframe renderer will fetch this URL and inject marked HTML into it
+  return window.location.href;
+}
 
-    // Set up the same configuration as the main page
-    const hostnames = ['authorkit.dev'];
+/**
+ * Waits for Author Kit's page to be fully decorated
+ * 
+ * Author Kit's loadArea function decorates sections and removes their data-status
+ * attribute when complete. We wait for the first section to have no data-status,
+ * which indicates decoration is complete.
+ * 
+ * @returns {Object} waitFor configuration
+ */
+function getWaitForConfig() {
+  return {
+    type: 'selector',
+    value: 'main .section:not([data-status])',
+    timeout: 45000, // 45 second timeout for block loading
+  };
+}
 
-    const locales = {
-      '': { lang: 'en' },
-      '/de': { lang: 'de' },
-      '/es': { lang: 'es' },
-      '/fr': { lang: 'fr' },
-      '/hi': { lang: 'hi' },
-      '/ja': { lang: 'ja' },
-      '/zh': { lang: 'zh' },
-    };
+/**
+ * Sets up the iframe context before page loads
+ * Can be used to inject configuration or override behavior
+ * 
+ * @param {Window} iframeWindow - The iframe window object
+ */
+function setupIframeContext(iframeWindow) {
+  // Optional: Add any global configuration needed for the iframe
+  // For example, you might want to disable analytics or modify behavior
 
-    const widgets = [
-      { fragment: '/fragments/' },
-      { schedule: '/schedules/' },
-      { youtube: 'https://www.youtube' },
-    ];
-
-    const components = ['fragment', 'schedule'];
-
-    const decorateArea = ({ area = doc }) => {
-      const eagerLoad = (parent, selector) => {
-        if (!parent) return;
-        const img = parent.querySelector(selector);
-        if (!img) return;
-        img.removeAttribute('loading');
-        img.fetchPriority = 'high';
-      };
-      eagerLoad(area, 'img');
-    };
-
-    // Configure the same way as the main page
-    setConfig({ hostnames, locales, widgets, components, decorateArea });
-
-    // Load the area (this runs block initialization)
-    await loadArea({ area: root });
-
-  } catch (error) {
-    console.error('[Page-Mapper Adapter] Error during decoration:', error);
-    throw error; // Re-throw so page-mapper knows it failed
-  }
+  // Signal that we're in page-mapper mode
+  iframeWindow.pageMapperMode = true;
 }
 
 /**
  * Creates a page mapper configured for Author Kit rendering
+ * Uses the new iframe-based renderer that loads the production URL
  * 
  * @param {string} sourceHTML - The source HTML from DA-NX
  * @returns {Promise<MapperService>} Initialized mapper service
  */
 export async function createAuthorKitMapper(sourceHTML) {
+  const pageURL = getCurrentPageURL();
+
   return initializeMapper(sourceHTML, {
     ...DEFAULT_CONFIG,
     rootSelector: 'main',
+
     // Track elements that DA-NX marked as contenteditable in the source
     // This automatically matches whatever DA-NX's EDITABLES configuration is
-    targetSelectors: ['[contenteditable="true"]'],
-    decorationOptions: {
-      decorators: [
-        // Simulate the full Author Kit rendering pipeline
-        decorateForMapper
-      ],
+    // Also track IMG elements for image drag & drop functionality
+    targetSelectors: [
+      '[contenteditable="true"]',
+      'img'
+    ],
+
+    // Use the new iframe renderer mode
+    renderMode: 'iframe',
+
+    // Configure iframe rendering
+    renderOptions: {
+      url: pageURL,
       rootSelector: 'main',
-      timeout: 45000, // 45 second timeout (increased for block loading)
+      waitFor: getWaitForConfig(),
+      setupContext: setupIframeContext,
     },
+
     logPerformance: true, // Enable performance logging for debugging
   });
 }
