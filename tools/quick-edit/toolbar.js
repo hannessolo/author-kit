@@ -1,5 +1,6 @@
 let floatingToolbar = null;
 let currentEditorView = null;
+let scrollListener = null;
 
 function createFloatingToolbar() {
   if (floatingToolbar) return floatingToolbar;
@@ -23,8 +24,17 @@ function createFloatingToolbar() {
     toggleMark('em');
   };
   
+  const underlineBtn = document.createElement('button');
+  underlineBtn.textContent = 'Underline';
+  underlineBtn.className = 'toolbar-btn toolbar-btn-underline';
+  underlineBtn.onmousedown = (e) => {
+    e.preventDefault(); // Prevent focus loss
+    toggleMark('u');
+  };
+  
   toolbar.appendChild(boldBtn);
   toolbar.appendChild(italicBtn);
+  toolbar.appendChild(underlineBtn);
   document.body.appendChild(toolbar);
   
   floatingToolbar = toolbar;
@@ -100,17 +110,64 @@ function updateToolbarState() {
     }
     italicBtn.classList.toggle('active', hasItalic);
   }
+  
+  // Update underline button
+  const underlineBtn = floatingToolbar.querySelector('.toolbar-btn-underline');
+  const underlineMark = schema.marks.u;
+  if (underlineMark) {
+    let hasUnderline = false;
+    if (selection.empty) {
+      // Check stored marks or marks at cursor position
+      hasUnderline = activeMarks.some(m => m.type === underlineMark);
+    } else {
+      // Check if the entire selection has the mark
+      hasUnderline = state.doc.rangeHasMark(selection.from, selection.to, underlineMark);
+    }
+    underlineBtn.classList.toggle('active', hasUnderline);
+  }
+}
+
+function positionToolbar() {
+  if (!floatingToolbar || !currentEditorView) return;
+  
+  const editorDom = currentEditorView.dom;
+  const rect = editorDom.getBoundingClientRect();
+  
+  // Position toolbar above the editor
+  floatingToolbar.style.position = 'fixed';
+  floatingToolbar.style.left = `${rect.left}px`;
+  floatingToolbar.style.top = `${rect.top - floatingToolbar.offsetHeight - 8}px`;
+  floatingToolbar.style.transform = 'none';
 }
 
 export function showToolbar() {
   const toolbar = createFloatingToolbar();
   toolbar.style.display = 'block';
-  updateToolbarState();
+  
+  // Wait for toolbar to render so we can measure its height
+  requestAnimationFrame(() => {
+    positionToolbar();
+    updateToolbarState();
+  });
+  
+  // Add scroll listener to reposition toolbar on scroll
+  if (!scrollListener) {
+    scrollListener = () => positionToolbar();
+    window.addEventListener('scroll', scrollListener, true);
+    window.addEventListener('resize', scrollListener);
+  }
 }
 
 export function hideToolbar() {
   if (floatingToolbar) {
     floatingToolbar.style.display = 'none';
+  }
+  
+  // Remove scroll listener
+  if (scrollListener) {
+    window.removeEventListener('scroll', scrollListener, true);
+    window.removeEventListener('resize', scrollListener);
+    scrollListener = null;
   }
 }
 
@@ -131,8 +188,14 @@ export function handleToolbarKeydown(event) {
     toggleMark('em');
     return true;
   }
+  // Handle Ctrl+U for underline (Cmd+U on Mac)
+  if ((event.metaKey || event.ctrlKey) && event.key === 'u') {
+    event.preventDefault();
+    toggleMark('u');
+    return true;
+  }
   return false;
 }
 
-export { updateToolbarState };
+export { updateToolbarState, positionToolbar };
 

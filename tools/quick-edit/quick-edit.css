@@ -128,10 +128,8 @@ picture.image-uploading::after {
 
 /* Floating Toolbar Styles */
 .prosemirror-floating-toolbar {
+  font-size: 13px;
   position: fixed;
-  bottom: 60px;
-  left: 50%;
-  transform: translateX(-50%);
   background: white;
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -139,11 +137,10 @@ picture.image-uploading::after {
   display: none;
   z-index: 1000;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  min-width: 350px;
 }
 
 .prosemirror-floating-toolbar .toolbar-btn {
-  padding: 8px 12px;
+  padding: 6px 12px;
   margin: 0 2px;
   border: 1px solid #ccc;
   background: white;
@@ -167,4 +164,8 @@ picture.image-uploading::after {
 
 .prosemirror-floating-toolbar .toolbar-btn-italic {
   font-style: italic;
+}
+
+.prosemirror-floating-toolbar .toolbar-btn-underline {
+  text-decoration: underline;
 }

@@ -5,7 +5,7 @@ import { loadStyle } from '../../scripts/ak.js';
 import { loadPage } from '../../scripts/scripts.js';
 import { getSchema } from 'https://main--da-live--adobe.aem.live/blocks/edit/prose/schema.js';
 import { EditorState, EditorView } from 'https://main--da-live--adobe.aem.live/deps/da-y-wrapper/dist/index.js';
-import { showToolbar, hideToolbar, setCurrentEditorView, updateToolbarState, handleToolbarKeydown } from './toolbar.js';
+import { showToolbar, hideToolbar, setCurrentEditorView, updateToolbarState, handleToolbarKeydown, positionToolbar } from './toolbar.js';
 
 let remoteUpdate = false;
 
@@ -316,8 +316,9 @@ function createProsemirrorEditor(cursorOffset, state, port1) {
           });
         }
         
-        // Update toolbar button states
+        // Update toolbar button states and position
         updateToolbarState();
+        positionToolbar();
       }
     });
   element.replaceWith(editorParent);
