@@ -1,3 +1,6 @@
+// Map to track data-cursor attribute changes: oldValue -> newValue
+let cursorChangeMap = new Map();
+
 function syncAttributes(bEl, aEl) {
   // Remove attributes not in a
   for (const attr of Array.from(bEl.attributes)) {
@@ -9,7 +12,16 @@ function syncAttributes(bEl, aEl) {
   // Add / update attributes from a
   for (const attr of Array.from(aEl.attributes)) {
     if (bEl.getAttribute(attr.name) !== attr.value) {
+      // Track data-cursor changes
+      if (attr.name === 'data-cursor') {
+        const oldValue = bEl.getAttribute(attr.name);
+        if (oldValue !== null) {
+          cursorChangeMap.set(oldValue, attr.value);
+        }
+      }
+      
       bEl.setAttribute(attr.name, attr.value)
+      console.log('setAttribute', attr.name, attr.value);
     }
   }
 }
@@ -172,25 +184,47 @@ export function startReconcile(textBody, callback) {
   const fullHtml = `<html><head>
     <script type="module">
       import { loadPage } from '/scripts/scripts.js';
-      loadPage();
-    </script>
+      loadPage().then(() => {
+        console.log('loadPage');
+        const editableElements = document.body.querySelectorAll('[data-cursor]');
+          editableElements.forEach(element => {
+          const editorParent = document.createElement('div');
+          editorParent.setAttribute('data-cursor', element.getAttribute('data-cursor'));
+          editorParent.classList.add('prosemirror-editor');
+          const editorMiddle = document.createElement('div');
+          editorMiddle.classList.add('ProseMirror');
+          editorMiddle.setAttribute('contenteditable', 'true');
+          editorMiddle.setAttribute('translate', 'no');
+          editorParent.appendChild(editorMiddle);
+          element.parentElement.insertBefore(editorParent, element);
+          editorMiddle.appendChild(element);
+          element.removeAttribute('data-cursor');
+        });
+      });
+  </script>
   </head><body>${textBody}</body></html>`;
 
-  // iframe.style.display = 'none';
   iframeDoc.open();
   iframeDoc.write(fullHtml);
   iframeDoc.close();
 
   setTimeout(() => {
+    // Reset the cursor change map before reconciliation
+    cursorChangeMap.clear();
+    
     reconcileChildren(iframeDoc.body.querySelector('main'), document.body.querySelector('main'));
     fixStyles(iframeDoc);
-    callback();
+    
+    // Pass the cursor change map to the callback
+    console.log('cursorChangeMap', cursorChangeMap);
+    callback(cursorChangeMap);
   }, 2000);
 }
 
 let cooldownTimeout = null;
 let pendingCall = false;
 let pendingArgs = null;
+let pendingCallback = null;
 export function startReconcileDebounced(textBody, callback) {
   if (!cooldownTimeout) {
     // Not in cooldown - execute immediately
@@ -205,21 +239,24 @@ export function startReconcileDebounced(textBody, callback) {
       if (pendingCall) {
         pendingCall = false;
         const args = pendingArgs;
+        const cb = pendingCallback;
         pendingArgs = null;
-        startReconcileDebounced(args, callback);
+        pendingCallback = null;
+        startReconcileDebounced(args, cb);
       }
     }, 2000);
   } else {
     // In cooldown - mark that we need to run again
     pendingCall = true;
     pendingArgs = textBody;
+    pendingCallback = callback;
   }
 }
 
 export function initializeReconcile() {
   const iframe = document.createElement('iframe');
   iframe.id = 'reconcile-iframe';
-  iframe.style.display = 'none';
+  // iframe.style.display = 'none';
   iframe.src = window.location.href;
   document.documentElement.prepend(iframe);
 }
