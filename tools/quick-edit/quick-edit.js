@@ -8,6 +8,8 @@ import { EditorState, EditorView } from 'https://main--da-live--adobe.aem.live/d
 import { showToolbar, hideToolbar, setCurrentEditorView, updateToolbarState, handleToolbarKeydown, positionToolbar } from './toolbar.js';
 import { createSimpleKeymap } from './simple-keymap.js';
 
+import { startReconcileDebounced, initializeReconcile } from './reconcile.js';
+
 let remoteUpdate = false;
 
 loadStyle('/tools/quick-edit/quick-edit.css');
@@ -351,15 +353,24 @@ function handleLoad({ target, config, location }) {
   target.contentWindow.postMessage({ init: config, location }, "*", [port2]);
 
   port1.onmessage = async (e) => {
-    initialized = true;
-
     if (e.data.set && e.data.set === 'body') {
-      const doc = new DOMParser().parseFromString(e.data.body, 'text/html');
-      document.body.innerHTML = doc.body.innerHTML;
-      await loadPage();
-      setupContentEditableListeners(port1);
-      setupImageDropListeners(port1);
-      setupCloseButton();
+      if (initialized) {
+        startReconcileDebounced(e.data.body, () => {
+          setupContentEditableListeners(port1);
+          setupImageDropListeners(port1);
+          setupCloseButton();
+        });
+      } else {
+        initialized = true;
+
+        const doc = new DOMParser().parseFromString(e.data.body, 'text/html');
+        document.body.innerHTML = doc.body.innerHTML;
+        await loadPage();
+        setupContentEditableListeners(port1);
+        setupImageDropListeners(port1);
+        setupCloseButton();
+        initializeReconcile();
+      }
     }
 
     if (e.data.set === 'editor') {
