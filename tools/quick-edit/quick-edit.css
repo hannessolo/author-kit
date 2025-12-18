@@ -15,7 +15,7 @@
 
 .remote-cursor-indicator {
   position: relative;
-  border: 2px solid;
+  outline: 2px solid;
 }
 
 [contenteditable="true"]:hover {

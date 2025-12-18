@@ -214,7 +214,7 @@ function setRemoteCursors() {
   remoteCursorElements.forEach((element) => {
     element.classList.add('remote-cursor-indicator');
     const color = element.getAttribute('data-cursor-remote-color');
-    element.style.borderColor = color;
+    element.style.outlineColor = color;
     element.style.setProperty('--cursor-remote-color', color);
   });
 }
