@@ -11,6 +11,9 @@ import { createSimpleKeymap } from './simple-keymap.js';
 import { startReconcileDebounced, initializeReconcile } from './reconcile.js';
 
 let remoteUpdate = false;
+let shouldTrackChanges = false;
+let trackedChanges = [];
+let isSyncing = false;
 
 loadStyle('/tools/quick-edit/quick-edit.css');
 
@@ -41,6 +44,7 @@ function setupContentEditableListeners(port) {
     port.postMessage({
       type: 'get-editor',
       cursorOffset: dataCursor,
+      isSyncing,
     });
   });
 }
@@ -221,7 +225,7 @@ function setRemoteCursors() {
   });
 }
 
-function createProsemirrorEditor(cursorOffset, state, port1) {
+function createProsemirrorEditor(cursorOffset, state, port1, remoteIsSyncing) {
   const existingEditorParent = document.querySelector(`.prosemirror-editor[data-cursor="${cursorOffset}"]`);
   if (existingEditorParent) {
     const editorEl = existingEditorParent.view;
@@ -234,6 +238,7 @@ function createProsemirrorEditor(cursorOffset, state, port1) {
       // Create transaction to replace the root node (first child of doc)
       const tr = view.state.tr.replaceWith(0, view.state.doc.content.size, node);
       remoteUpdate = true;
+      tr.setMeta('isSyncing', remoteIsSyncing);
       view.dispatch(tr);
       remoteUpdate = false;
       return;
@@ -259,9 +264,10 @@ function createProsemirrorEditor(cursorOffset, state, port1) {
   const element = document.querySelector(`[data-cursor="${cursorOffset}"]`);
 
   if (!element) {
-    port1.postMessage({
-      type: 'reload',
-    });
+    // port1.postMessage({
+    //   type: 'reload',
+    // });
+    console.log('no element NO ELEMENT');
     return;
   }
   if (element.getAttribute('data-cursor-remote')) {
@@ -297,17 +303,27 @@ function createProsemirrorEditor(cursorOffset, state, port1) {
         const oldSelection = editorView.state.selection.from;
         const newState = editorView.state.apply(tr);
         editorView.updateState(newState);
+
+        if (tr.getMeta('isSyncing') || isSyncing) return;
+
         updateInstrumentation(newState.doc.firstChild.nodeSize - oldLength, currentCursorOffset);
 
         if (remoteUpdate) { return; }
         
         if (numChanges > 0) {
           const editedEl = newState.doc.firstChild;
-          port1.postMessage({
-            type: 'node-update',
-            node: editedEl.toJSON(),
-            cursorOffset: currentCursorOffset,
-          });
+          if (shouldTrackChanges) {
+            trackedChanges.push(...tr.steps.map((step) => ({
+              baseCursor: currentCursorOffset,
+              step: step.toJSON(),
+            })));
+          } else {
+            port1.postMessage({
+              type: 'node-update',
+              node: editedEl.toJSON(),
+              cursorOffset: currentCursorOffset,
+            });
+          }
         }
 
         // Check if selection changed
@@ -355,10 +371,18 @@ function handleLoad({ target, config, location }) {
   port1.onmessage = async (e) => {
     if (e.data.set && e.data.set === 'body') {
       if (initialized) {
+        shouldTrackChanges = true;
         startReconcileDebounced(e.data.body, () => {
           setupContentEditableListeners(port1);
           setupImageDropListeners(port1);
           setupCloseButton();
+          port1.postMessage({
+            type: 'sync-changes',
+            changes: trackedChanges,
+          });
+          shouldTrackChanges = false;
+          trackedChanges = [];
+          isSyncing = true;
         });
       } else {
         initialized = true;
@@ -374,8 +398,8 @@ function handleLoad({ target, config, location }) {
     }
 
     if (e.data.set === 'editor') {
-      const { editor, cursorOffset } = e.data;
-      createProsemirrorEditor(cursorOffset, editor, port1);
+      const { editor, cursorOffset, isSyncing: remoteIsSyncing } = e.data;
+      createProsemirrorEditor(cursorOffset, editor, port1, remoteIsSyncing);
     }
 
     if (e.data.set === 'cursors') {
@@ -423,6 +447,11 @@ function handleLoad({ target, config, location }) {
       });
       console.error('Image upload failed:', e.data.error);
     }
+
+    if (e.data.set === 'sync-done') {
+      setupContentEditableListeners(port1);
+      isSyncing = false;
+    }
   };
 }
 
@@ -439,5 +468,5 @@ export default async function loadQuickEdit({ detail: payload }) {
   });
   document.documentElement.append(iframe);
   iframe.id = 'quick-edit-iframe';
-  iframe.style.visibility = 'hidden';
+  // iframe.style.visibility = 'hidden';
 }

@@ -1,6 +1,3 @@
-// Map to track data-cursor attribute changes: oldValue -> newValue
-let cursorChangeMap = new Map();
-
 function syncAttributes(bEl, aEl) {
   // Remove attributes not in a
   for (const attr of Array.from(bEl.attributes)) {
@@ -11,17 +8,8 @@ function syncAttributes(bEl, aEl) {
 
   // Add / update attributes from a
   for (const attr of Array.from(aEl.attributes)) {
-    if (bEl.getAttribute(attr.name) !== attr.value) {
-      // Track data-cursor changes
-      if (attr.name === 'data-cursor') {
-        const oldValue = bEl.getAttribute(attr.name);
-        if (oldValue !== null) {
-          cursorChangeMap.set(oldValue, attr.value);
-        }
-      }
-      
+    if (bEl.getAttribute(attr.name) !== attr.value) { 
       bEl.setAttribute(attr.name, attr.value)
-      console.log('setAttribute', attr.name, attr.value);
     }
   }
 }
@@ -176,16 +164,14 @@ function fixStyles(iframeDoc) {
 }
 
 export function startReconcile(textBody, callback) {
+  console.log('startReconcile', textBody);
   const iframe = document.getElementById('reconcile-iframe');
   const iframeDoc = iframe.contentDocument;
-
-  console.log(textBody)
 
   const fullHtml = `<html><head>
     <script type="module">
       import { loadPage } from '/scripts/scripts.js';
       loadPage().then(() => {
-        console.log('loadPage');
         const editableElements = document.body.querySelectorAll('[data-cursor]');
           editableElements.forEach(element => {
           const editorParent = document.createElement('div');
@@ -209,16 +195,11 @@ export function startReconcile(textBody, callback) {
   iframeDoc.close();
 
   setTimeout(() => {
-    // Reset the cursor change map before reconciliation
-    cursorChangeMap.clear();
-    
     reconcileChildren(iframeDoc.body.querySelector('main'), document.body.querySelector('main'));
     fixStyles(iframeDoc);
     
-    // Pass the cursor change map to the callback
-    console.log('cursorChangeMap', cursorChangeMap);
-    callback(cursorChangeMap);
-  }, 2000);
+    callback();
+  }, 5000);
 }
 
 let cooldownTimeout = null;
@@ -244,7 +225,7 @@ export function startReconcileDebounced(textBody, callback) {
         pendingCallback = null;
         startReconcileDebounced(args, cb);
       }
-    }, 2000);
+    }, 5000);
   } else {
     // In cooldown - mark that we need to run again
     pendingCall = true;
