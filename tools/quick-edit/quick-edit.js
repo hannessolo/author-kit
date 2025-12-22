@@ -264,10 +264,9 @@ function createProsemirrorEditor(cursorOffset, state, port1, remoteIsSyncing) {
   const element = document.querySelector(`[data-cursor="${cursorOffset}"]`);
 
   if (!element) {
-    // port1.postMessage({
-    //   type: 'reload',
-    // });
-    console.log('no element NO ELEMENT');
+    port1.postMessage({
+      type: 'reload',
+    });
     return;
   }
   if (element.getAttribute('data-cursor-remote')) {
@@ -379,6 +378,7 @@ function handleLoad({ target, config, location }) {
           port1.postMessage({
             type: 'sync-changes',
             changes: trackedChanges,
+            ts: e.data.ts,
           });
           shouldTrackChanges = false;
           trackedChanges = [];
