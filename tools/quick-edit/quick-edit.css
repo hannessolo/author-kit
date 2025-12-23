@@ -128,6 +128,7 @@ picture.image-uploading::after {
 
 /* Floating Toolbar Styles */
 .prosemirror-floating-toolbar {
+  display: flex;
   font-size: 13px;
   position: fixed;
   background: white;
@@ -149,7 +150,7 @@ picture.image-uploading::after {
   transition: background 0.2s ease;
 }
 
-.prosemirror-floating-toolbar .toolbar-btn:hover {
+.prosemirror-floating-toolbar .toolbar-btn:hover, .ProseMirror-menuitem:hover {
   background: #f0f0f0;
 }
 
@@ -168,4 +169,41 @@ picture.image-uploading::after {
 
 .prosemirror-floating-toolbar .toolbar-btn-underline {
   text-decoration: underline;
+}
+
+.ProseMirror-menuitem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  margin: 0 2px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.ProseMirror-menuitem:has(.ProseMirror-menu-disabled) {
+  display: none;
+}
+
+.da-palettes:has(da-palette) {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+da-palette {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
 }

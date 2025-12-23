@@ -273,11 +273,11 @@ function createProsemirrorEditor(cursorOffset, state, port1) {
       handleDOMEvents: {
         focus: (view, event) => {
           setCurrentEditorView(view);
-          showToolbar();
+          showToolbar(view);
           return false;
         },
         blur: (view, event) => {
-          hideToolbar();
+          hideToolbar(view);
           setCurrentEditorView(null);
           port1.postMessage({
             type: 'cursor-move',
