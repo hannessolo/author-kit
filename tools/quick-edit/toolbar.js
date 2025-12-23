@@ -167,7 +167,7 @@ function positionToolbar() {
   const rect = editorDom.getBoundingClientRect();
 
   const top = Math.max(rect.top - floatingToolbar.offsetHeight - 8, 8);
-  
+
   // Position toolbar above the editor
   floatingToolbar.style.position = 'fixed';
   floatingToolbar.style.left = `${rect.left}px`;
