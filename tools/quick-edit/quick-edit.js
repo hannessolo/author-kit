@@ -23,7 +23,7 @@ function pollConnection(action) {
   let count = 0;
   const interval = setInterval(() => {
     count += 1;
-    if (initialized || count > 20) {
+    if (initialized || count > 120) {
       clearInterval(interval);
       return;
     }
