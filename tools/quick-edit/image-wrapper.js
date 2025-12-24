@@ -5,7 +5,6 @@ export function createImageWrapperPlugin() {
     props: {
       nodeViews: {
         image: (node, view, getPos) => {
-          console.log('image', node);
           const picture = document.createElement('picture');
           const img = document.createElement('img');
           
