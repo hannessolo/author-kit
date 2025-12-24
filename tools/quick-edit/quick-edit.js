@@ -7,6 +7,7 @@ import { getSchema } from 'https://main--da-live--adobe.aem.live/blocks/edit/pro
 import { EditorState, EditorView } from 'https://main--da-live--adobe.aem.live/deps/da-y-wrapper/dist/index.js';
 import { showToolbar, hideToolbar, setCurrentEditorView, updateToolbarState, handleToolbarKeydown, positionToolbar } from './toolbar.js';
 import { createSimpleKeymap } from './simple-keymap.js';
+import { createImageWrapperPlugin } from './image-wrapper.js';
 
 let remoteUpdate = false;
 
@@ -43,67 +44,79 @@ function setupContentEditableListeners(port) {
   });
 }
 
-function setupImageDropListeners(port) {
-  const images = document.querySelectorAll('main picture img');
+function setupImageDropListeners(port, dom = document) {
+  const images = dom.querySelectorAll('picture img');
 
   images.forEach((img) => {
     const picture = img.closest('picture');
 
-    img.addEventListener('dragenter', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      picture?.classList.add('image-drop-target');
-    });
+    if (img.listeners) {
+      img.removeEventListener('dragenter', img.listeners.dragenter);
+      img.removeEventListener('dragover', img.listeners.dragover);
+      img.removeEventListener('dragleave', img.listeners.dragleave);
+      img.removeEventListener('drop', img.listeners.drop);
+      img.listeners = null;
+    }
 
-    img.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      e.dataTransfer.dropEffect = 'copy';
-    });
-
-    img.addEventListener('dragleave', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      // Only remove if we're actually leaving the picture element
-      const relatedTarget = e.relatedTarget;
-      if (!picture?.contains(relatedTarget)) {
+    img.listeners = {
+      dragenter: (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        picture?.classList.add('image-drop-target');
+      },
+      dragover: (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'copy';
+      },
+      dragleave: (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Only remove if we're actually leaving the picture element
+        const relatedTarget = e.relatedTarget;
+        if (!picture?.contains(relatedTarget)) {
+          picture?.classList.remove('image-drop-target');
+        }
+      },
+      drop: async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         picture?.classList.remove('image-drop-target');
+  
+        const file = e.dataTransfer.files[0];
+        if (!file?.type.startsWith('image/')) return;
+  
+        // Get tracking attributes
+        const dataCursor = img.getAttribute('data-cursor');
+        const originalSrc = img.src;
+  
+        // Show loading state
+        picture?.classList.add('image-uploading');
+  
+        // Read and send the image to DA editor for upload
+        const reader = new FileReader();
+        reader.onload = () => {
+          port.postMessage({
+            type: 'image-replace',
+            cursorOffset: dataCursor ? parseInt(dataCursor, 10) : null,
+            imageData: reader.result,
+            fileName: file.name,
+            mimeType: file.type,
+            originalSrc,
+          });
+        };
+        reader.onerror = () => {
+          picture?.classList.remove('image-uploading');
+          console.error('Failed to read image file');
+        };
+        reader.readAsDataURL(file);
       }
-    });
+    };
 
-    img.addEventListener('drop', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      picture?.classList.remove('image-drop-target');
-
-      const file = e.dataTransfer.files[0];
-      if (!file?.type.startsWith('image/')) return;
-
-      // Get tracking attributes
-      const dataCursor = img.getAttribute('data-cursor');
-      const originalSrc = img.src;
-
-      // Show loading state
-      picture?.classList.add('image-uploading');
-
-      // Read and send the image to DA editor for upload
-      const reader = new FileReader();
-      reader.onload = () => {
-        port.postMessage({
-          type: 'image-replace',
-          cursorOffset: dataCursor ? parseInt(dataCursor, 10) : null,
-          imageData: reader.result,
-          fileName: file.name,
-          mimeType: file.type,
-          originalSrc,
-        });
-      };
-      reader.onerror = () => {
-        picture?.classList.remove('image-uploading');
-        console.error('Failed to read image file');
-      };
-      reader.readAsDataURL(file);
-    });
+    img.addEventListener('dragenter', img.listeners.dragenter);
+    img.addEventListener('dragover', img.listeners.dragover);
+    img.addEventListener('dragleave', img.listeners.dragleave);
+    img.addEventListener('drop', img.listeners.drop);
   });
 }
 
@@ -234,6 +247,7 @@ function createProsemirrorEditor(cursorOffset, state, port1) {
       remoteUpdate = true;
       view.dispatch(tr);
       remoteUpdate = false;
+      setupImageDropListeners(port1, existingEditorParent);
       return;
     }
   }
@@ -247,7 +261,7 @@ function createProsemirrorEditor(cursorOffset, state, port1) {
   const editorState = EditorState.create({
     doc,
     schema,
-    plugins: [createSimpleKeymap()],
+    plugins: [createSimpleKeymap(), createImageWrapperPlugin()],
   });
 
   const editorParent = document.createElement('div');
@@ -325,6 +339,7 @@ function createProsemirrorEditor(cursorOffset, state, port1) {
     });
   element.replaceWith(editorParent);
   editorParent.view = editorView;
+  setupImageDropListeners(port1, editorParent);
   
   setRemoteCursors();
 }
@@ -358,7 +373,7 @@ function handleLoad({ target, config, location }) {
       document.body.innerHTML = doc.body.innerHTML;
       await loadPage();
       setupContentEditableListeners(port1);
-      setupImageDropListeners(port1);
+      setupImageDropListeners(port1, document.body.querySelector('main'));
       setupCloseButton();
     }
 
