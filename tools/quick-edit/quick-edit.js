@@ -261,7 +261,7 @@ function createProsemirrorEditor(cursorOffset, state, port1) {
   const editorState = EditorState.create({
     doc,
     schema,
-    plugins: [createSimpleKeymap(), createImageWrapperPlugin()],
+    plugins: [createSimpleKeymap(port1), createImageWrapperPlugin()],
   });
 
   const editorParent = document.createElement('div');
