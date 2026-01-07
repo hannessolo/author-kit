@@ -1,7 +1,7 @@
 import { loadPage } from '../../scripts/scripts.js';
 
 async function loadMoudle(origin, payload, ref) {
-  const { default: loadQuickEdit } = await import(`${origin}/nx/blocks/wysiwyg-portal/init-host.js`);
+  const { default: loadQuickEdit } = await import(`${origin}/nx/public/plugins/quick-edit/quick-edit.js`);
   loadQuickEdit(payload, ref, loadPage);
 }
 
