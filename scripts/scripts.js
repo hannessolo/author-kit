@@ -44,3 +44,8 @@ await loadPage();
   const ref = new URL(window.location.href).searchParams.get('dapreview');
   if (ref) import('../tools/da/da.js').then((mod) => mod.default(loadPage));
 }());
+
+setTimeout(() => {
+  const hasQE = new URL(window.location.href).searchParams.has('quick-edit');
+  if (hasQE) import('../tools/quick-edit/quick-edit.js').then((mod) => mod.default());
+}, 500);
