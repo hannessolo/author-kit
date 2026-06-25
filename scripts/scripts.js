@@ -40,9 +40,30 @@ export async function loadPage() {
 }
 await loadPage();
 
+const DA_EXP = 'https://nx2-exp--da-nx--adobe.aem.live/nx/public/plugins/exp/exp.js'
+
+let expMod;
+async function toggleExp() {
+  const exists = document.querySelector('#aem-sidekick-exp');
+
+  // If it doesn't exist, let module side effects run
+  if (!exists) {
+    expMod = await import(DA_EXP);
+    return;
+  }
+
+  // Else, cache the module here and toggle it.
+  if (!expMod) expMod = await import(DA_EXP);
+  expMod.default();
+}
+
 (function da() {
   const ref = new URL(window.location.href).searchParams.get('dapreview');
   if (ref) import('../tools/da/da.js').then((mod) => mod.default(loadPage));
+
+  if (new URL(window.location.href).searchParams.get('daexperiment')) {
+    toggleExp();
+  }
 }());
 
 setTimeout(() => {
