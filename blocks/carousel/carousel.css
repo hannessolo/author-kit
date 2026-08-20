@@ -22,8 +22,8 @@
 
   .carousel-slide img {
     width: 100%;
-    height: auto;
-    object-fit: cover;
+    max-height: 450px;
+    object-fit: contain;
   }
 
   /* Prev / next arrows */
