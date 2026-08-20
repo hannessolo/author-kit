@@ -1,0 +1,100 @@
+.carousel {
+  position: relative;
+
+  .carousel-track {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .carousel-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .carousel-slide {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+    text-align: center;
+  }
+
+  .carousel-slide img {
+    width: 100%;
+    max-height: 450px;
+    object-fit: contain;
+  }
+
+  /* Prev / next arrows */
+  .carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background-color: rgba(0 0 0 / 45%);
+    color: var(--color-light);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease-in-out;
+    z-index: 1;
+  }
+
+  .carousel-arrow:hover {
+    background-color: rgba(0 0 0 / 70%);
+  }
+
+  .carousel-arrow::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-top: 2px solid currentcolor;
+    border-right: 2px solid currentcolor;
+  }
+
+  .carousel-arrow-prev {
+    left: var(--spacing-m);
+  }
+
+  .carousel-arrow-prev::before {
+    transform: rotate(-135deg);
+    margin-left: 4px;
+  }
+
+  .carousel-arrow-next {
+    right: var(--spacing-m);
+  }
+
+  .carousel-arrow-next::before {
+    transform: rotate(45deg);
+    margin-right: 4px;
+  }
+
+  /* Dots */
+  .carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-s);
+    margin-top: var(--spacing-m);
+  }
+
+  .carousel-dot {
+    width: 10px;
+    height: 10px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background-color: light-dark(var(--color-gray-300), var(--color-gray-600));
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+  }
+
+  .carousel-dot.active {
+    background-color: light-dark(var(--color-dark), var(--color-light));
+  }
+}
