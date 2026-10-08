@@ -1,0 +1,8 @@
+.slow-block {
+  padding: 16px;
+  border: 2px dashed #c00;
+}
+
+.slow-block.slow-block-done {
+  border-color: #080;
+}
