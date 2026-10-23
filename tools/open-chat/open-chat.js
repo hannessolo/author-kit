@@ -15,7 +15,7 @@ async function init() {
       throw new Error('This DA SDK does not support setPrompt.');
     }
     button.addEventListener('click', () => {
-      actions.setPrompt('Hello from the fullscreen openChat app!', { autoSend: true });
+      actions.setPrompt('', { autoSend: false });
     });
     button.disabled = false;
     status.textContent = '';
