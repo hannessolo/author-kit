@@ -83,6 +83,16 @@ A section is a sub-section of your page. It can be styled using a `section-metad
 ### Block
 Blocks are children of sections. A block adds visual context to parts of a page.
 
+#### Wrapper inline-editing reproduction
+The `wrapper` block reproduces the parent-wrapper issue described in
+[adobe/da-nx#869](https://github.com/adobe/da-nx/pull/869#issuecomment-6338294725).
+Author a `Wrapper` block containing a paragraph, then toggle bold formatting
+while inline editing. Decoration wraps paragraphs containing `<strong>` in
+`<aside>` and other paragraphs in `<div>`, preserving the original paragraph
+and its `data-prose-index`. If inline editing swaps only the paragraph after
+redecoration, its parent keeps the old tag instead of changing. Inspect the
+paragraph's parent in developer tools; a full reload chooses the correct tag.
+
 ### Auto Block
 An auto block is a block generated from a pre-defined piece of content. Often times from a link that matches a particular pattern. Link-based auto blocks can be helpful when additional nesting of content is required.
 

@@ -1,0 +1,19 @@
+.wrapper div:has(> p),
+.wrapper aside:has(> p) {
+  padding: 16px;
+  margin-block: 12px;
+  border-inline-start: 4px solid;
+  border-radius: 4px;
+}
+
+.wrapper div:has(> p) {
+  color: #123b63;
+  background-color: #eaf4ff;
+  border-color: #2670b8;
+}
+
+.wrapper aside:has(> p) {
+  color: #633b00;
+  background-color: #fff3d6;
+  border-color: #ad6500;
+}

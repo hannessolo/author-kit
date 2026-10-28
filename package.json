@@ -3,6 +3,8 @@
   "version": "1.3.0",
   "description": "An extremely minimal boilerplate for AEM.",
   "scripts": {
+    "sdk2:server": "node tools/sdk2/server.mjs",
+    "sdk2:test": "node --test tools/sdk2/server.test.mjs tools/sdk2/browser.test.mjs",
     "lint:js": "eslint .",
     "lint:css": "stylelint blocks/**/*.css styles/*.css",
     "lint": "npm run lint:js && npm run lint:css",
