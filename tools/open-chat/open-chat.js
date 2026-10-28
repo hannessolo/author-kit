@@ -10,7 +10,7 @@ async function init() {
   try {
     if (window.parent === window) throw new Error('Open this app inside the DA fullscreen shell.');
     const { default: sdk } = await import(`${getSdkOrigin()}/nx/utils/sdk.js`);
-    const { actions } = await sdk;
+    const { actions, capabilities } = await sdk;
     if (typeof actions.setPrompt !== 'function') {
       throw new Error('This DA SDK does not support setPrompt.');
     }
@@ -18,7 +18,18 @@ async function init() {
       actions.setPrompt('', { autoSend: false });
     });
     button.disabled = false;
-    status.textContent = '';
+    if (capabilities?.chatTurnCompleted === 1
+      && typeof actions.subscribeChatTurnCompleted === 'function') {
+      let turns = 0;
+      const unsubscribe = actions.subscribeChatTurnCompleted(({ status: turnStatus }) => {
+        turns += 1;
+        status.textContent = `Chat turn ${turns}: ${turnStatus} (${new Date().toLocaleTimeString()})`;
+      });
+      window.addEventListener('pagehide', unsubscribe, { once: true });
+      status.textContent = 'Waiting for a chat turn to finish.';
+    } else {
+      status.textContent = 'This host does not support chat turn notifications.';
+    }
   } catch (error) {
     status.textContent = error.message;
     // eslint-disable-next-line no-console
