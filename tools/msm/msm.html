@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>MSM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/tools/msm/msm.css">
+    <script type="module" src="/tools/msm/msm.js"></script>
+  </head>
+  <body>
+    <main id="msm">
+      <header>
+        <div>
+          <h1>MSM</h1>
+          <p>Compare US and CA pages, promote changes, and create Canadian copies.</p>
+        </div>
+        <button type="button" id="refresh" disabled>Refresh</button>
+      </header>
+      <p id="site"></p>
+      <p id="status" role="status" aria-live="polite">Connecting to DA...</p>
+      <div class="table-container">
+        <table>
+          <caption>US pages and their matching CA pages</caption>
+          <thead>
+            <tr>
+              <th scope="col">Page</th>
+              <th scope="col">US last modified</th>
+              <th scope="col">CA last modified</th>
+              <th scope="col">Status</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody id="pages"></tbody>
+        </table>
+      </div>
+    </main>
+  </body>
+</html>

@@ -70,6 +70,24 @@ For projects that want a few more batteries. Built by the team who brought you d
 * Modern CSS scoping & nesting
 * AEM Operational Telemetry
 
+### MSM
+Open `/app/hannessolo/author-kit/tools/msm/msm?nxver=2` on `https://da.live`
+to compare HTML pages recursively under `/us` and `/ca`. Add
+`#/org/site` to target another DA site. For this branch, add `&ref=chatdone`;
+for local development, use `&ref=local`. The app uses the host's authenticated
+DA SDK and admin environment.
+
+Pages whose CA modification date is at least as recent as US are green.
+Newer US pages have a **Promote change** button that submits a US-to-CA
+promotion prompt to chat. US-only pages have a **Create CA copy** button that
+asks the agent to create a Canadian-adapted draft at the matching `/ca` path,
+without overwriting an existing CA page. Unknown dates are not considered up to date.
+Chat must be enabled for the target site (`ew.enabled` or browser opt-in,
+without `ew.disableChat`). The prompt asks the agent to preserve Canadian
+localization, save the CA draft, and not publish. Sending a prompt does not
+confirm a successful promotion. MSM rescans after chat turns finish when the
+host supports notifications; **Refresh** is also available.
+
 ### Operations
 * Cloudflare Worker reference implementation
 
